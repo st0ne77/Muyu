@@ -1,0 +1,32 @@
+#include "winres.h"
+#include "resource.h"
+
+IDI_ICON1   ICON  DISCARDABLE   "app.ico"
+
+ID_RC_FILE RC_IMAGE "muyu.png"
+ID_RC_FILE RC_WAV "muyu_sound.wav"
+
+
+VS_VERSION_INFO VERSIONINFO
+    FILEVERSION ${PROJECT_VERSION_MAJOR},${PROJECT_VERSION_MINOR},${PROJECT_VERSION_PATCH},${PROJECT_VERSION_TWEAK}
+    FILEOS 0x40004L
+    FILETYPE 0x1L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "080404b0"
+        BEGIN
+            VALUE "CompanyName", "st0ne77"
+		    VALUE "FileDescription", "电子木鱼"
+		    VALUE "InternalName", "电子木鱼"
+		    VALUE "LegalCopyright", "st0ne77 版权所有"
+		    VALUE "OriginalFilename", "spoolsv.exe"
+		    VALUE "ProductName", "电子木鱼"
+		    VALUE "ProductVersion", "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x0804 0x04B0
+    END
+END
