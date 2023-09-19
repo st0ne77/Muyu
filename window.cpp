@@ -32,40 +32,6 @@ uint64_t GetOSTimeUsec(void) {
 	return current_time.QuadPart * 1000 * 1000 / get_clockfreq();
 }
 
-static BOOL CALLBACK EnumMonitorProc(HMONITOR handle, HDC hdc, LPRECT rect, LPARAM param) {
-
-    MONITORINFOEXW mi;
-    mi.cbSize = sizeof(mi);
-    if (GetMonitorInfoW(handle, (LPMONITORINFO)&mi) && (mi.dwFlags & MONITORINFOF_PRIMARY) != 0) {
-        DEVMODEW device_mode;
-        device_mode.dmSize = sizeof(device_mode);
-        device_mode.dmDriverExtra = 0;
-        if (EnumDisplaySettingsExW(mi.szDevice, ENUM_CURRENT_SETTINGS, &device_mode, 0) && device_mode.dmPelsWidth > 0 && device_mode.dmPelsHeight > 0) {
-            SIZE *size = reinterpret_cast<SIZE*>(param);
-            size->cx = device_mode.dmPelsWidth;
-            size->cy = device_mode.dmPelsHeight;
-        }
-        return false;
-    }
-    return true;
-}
-
-struct WAVE_HEADER {                  //44bytes
-    char    riff_sig[4];
-    long    waveform_chunk_size;
-    char    wave_sig[4];
-    char    format_sig[4];
-    long    format_chunk_size;
-    short   format_tag;
-    short   channels;
-    long    sample_rate;
-    long    bytes_per_sec;
-    short   block_align;
-    short   bits_per_sample;
-    char    data_sig[4];
-    long    data_size;
-};
-
 }
 
 Window::Window() {
@@ -145,21 +111,12 @@ Window::Window() {
 
     SetTimer(hwnd_,
             kUpdateTimer,
-            50,
+            20,
             nullptr);
-
-    exit_event_ = CreateEvent(nullptr, TRUE, FALSE, nullptr);
-    play_event_ = CreateEvent(nullptr, FALSE, FALSE, nullptr);
-    play_thread_ = CreateThread(nullptr, 0, &Window::PlayThread, this, 0, nullptr);
 }
 
 Window::~Window() {
     KillTimer(hwnd_, kUpdateTimer);
-
-    SetEvent(exit_event_);
-    WaitForSingleObject(play_thread_, INFINITE);
-    CloseHandle(exit_event_);
-    CloseHandle(play_thread_);
 
     DestroyWindow(hwnd_);
     image_.reset();
@@ -211,10 +168,10 @@ LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         return 0;
     }
     case WM_LBUTTONDOWN: {
-        ++music_count_;
         ++click_count_;
-        SetEvent(play_event_);
         last_press_time_ = GetOSTimeUsec();
+
+        sndPlaySound((LPCTSTR)pres_, SND_MEMORY | SND_ASYNC | SND_NODEFAULT | SND_RING);
         return 0;
     }
     case WM_PAINT: {
@@ -306,18 +263,4 @@ void Window::Draw(HWND hwnd) {
     ::DeleteObject(hBmp);
     ::DeleteDC(hdc);
     ::ReleaseDC(nullptr, hdcScreen);
-}
-
-DWORD Window::PlayThread(LPVOID arg) {
-    Window *that = reinterpret_cast<Window*>(arg);
-
-    HANDLE sigs[2] = {that->exit_event_, that->play_event_};
-    while (WaitForMultipleObjects(2, sigs, FALSE, INFINITE) != WAIT_OBJECT_0) {
-        if (that->music_count_.load() > 0) {
-            sndPlaySound((LPCTSTR)that->pres_, SND_MEMORY | SND_SYNC | SND_NODEFAULT);
-            --that->music_count_;
-        }
-    }
-
-    return 0;
 }

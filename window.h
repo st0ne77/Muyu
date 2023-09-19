@@ -23,8 +23,6 @@ private:
 
     void Draw(HWND hwnd);
 
-    static DWORD WINAPI PlayThread(LPVOID arg);
-
     HWND hwnd_;
 
     std::unique_ptr<Gdiplus::Bitmap> image_;
@@ -37,10 +35,4 @@ private:
     uint64_t last_press_time_ = 0;
 
     uint64_t click_count_ = 0;
-
-    HANDLE exit_event_ = nullptr;
-    HANDLE play_event_ = nullptr;
-    HANDLE play_thread_ = nullptr;
-
-    std::atomic_uint32_t music_count_ = 0;
 };

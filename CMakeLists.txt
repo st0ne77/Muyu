@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.14.1)
 cmake_policy(SET CMP0091 NEW)
-project(Muyu VERSION 1.0.1.1 LANGUAGES C CXX)
+project(Muyu VERSION 1.0.1.4 LANGUAGES C CXX)
 
 if (MSVC)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /utf-8")
