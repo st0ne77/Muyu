@@ -5,6 +5,7 @@
 #include <Windows.h>
 #include <gdiplus.h>
 #include <atomic>
+#include <set>
 
 class Window {
 public:
@@ -20,7 +21,7 @@ private:
     static LRESULT CALLBACK HandleMsgThunk( HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam );
     LRESULT HandleMsg( HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam );
 
-    void Draw(HWND hwnd, uint8_t text_alpha);
+    void Draw(HWND hwnd);
 
     static DWORD WINAPI PlayThread(LPVOID arg);
 
@@ -35,9 +36,11 @@ private:
 
     uint64_t last_press_time_ = 0;
 
+    uint64_t click_count_ = 0;
+
     HANDLE exit_event_ = nullptr;
     HANDLE play_event_ = nullptr;
     HANDLE play_thread_ = nullptr;
 
-    std::atomic_uint32_t count_ = 0;
+    std::atomic_uint32_t music_count_ = 0;
 };

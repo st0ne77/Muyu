@@ -131,7 +131,7 @@ Window::Window() {
                          L"Secure Player",
                          WS_POPUP,
                          screen_size.cx - kDefaultWidth,
-                         1080,
+                         screen_size.cy - kDefaultHeight - 100,
                          kDefaultWidth,
                          kDefaultHeight,
                          nullptr,
@@ -207,11 +207,12 @@ LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         return 0;
     }
     case WM_CREATE: {
-        Draw(hWnd, 0);
+        Draw(hWnd);
         return 0;
     }
     case WM_LBUTTONDOWN: {
-        ++count_;
+        ++music_count_;
+        ++click_count_;
         SetEvent(play_event_);
         last_press_time_ = GetOSTimeUsec();
         return 0;
@@ -221,12 +222,12 @@ LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     }
     case WM_TIMER: {
         uint64_t current = GetOSTimeUsec();
+
         uint64_t diff = current - last_press_time_;
-        if (diff > 5000000) {
+        if (diff > 3000000) {
             break;
         }
-        uint8_t alpha = (diff <= 3000000) ? (uint8_t)((3000000 - diff) * 255 / 3000000): (uint8_t)0;
-        Draw(hWnd, alpha);
+        Draw(hWnd);
         break;
     }
     case WM_NCHITTEST: {
@@ -248,7 +249,7 @@ LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     return DefWindowProc(hWnd, msg, wParam, lParam);
 }
 
-void Window::Draw(HWND hwnd, uint8_t text_alpha) {
+void Window::Draw(HWND hwnd) {
     RECT rect;
     ::GetWindowRect(hwnd, &rect);
     SIZE wndSize = {rect.right - rect.left, rect.bottom - rect.top};
@@ -261,24 +262,35 @@ void Window::Draw(HWND hwnd, uint8_t text_alpha) {
     Gdiplus::Graphics graphics(hdc);
     graphics.SetSmoothingMode(Gdiplus::SmoothingModeHighQuality);
 
-    Gdiplus::SolidBrush brush(Gdiplus::Color(255, 0, 0));
-
     Gdiplus::Rect windowRect{0, 0, kDefaultWidth, kDefaultHeight};
-    graphics.DrawImage(image_.get(), windowRect);
 
-    if (text_alpha > 50) {
+    uint64_t current = GetOSTimeUsec();
+    uint64_t diff = current - last_press_time_;
+    if (diff < 200000) {
+        float diff = 4.0f;
+        std::unique_ptr<Gdiplus::Bitmap> zoom(image_->Clone(diff, diff, image_->GetWidth() - diff * 2.0f, image_->GetHeight() - diff * 2.0f, image_->GetPixelFormat()));
+        graphics.DrawImage(zoom.get(), windowRect);
+    } else {
+        graphics.DrawImage(image_.get(), windowRect);
+    }
+
+    if (diff < 2000000) {
         Gdiplus::REAL size = 12;
         Gdiplus::Font font(L"微软雅黑", size);
-        Gdiplus::SolidBrush textBrush(Gdiplus::Color(text_alpha, 255, 0, 0));
 
-        const wchar_t *str = L"功德+1";
+        uint8_t alpha = (uint8_t)((2000000 - (current - last_press_time_)) * 255 / 2000000);
+
+        Gdiplus::SolidBrush textBrush(Gdiplus::Color(alpha, 255, 0, 0));
+
+        wchar_t buffer[1024];
+        swprintf(buffer, L"功德+%lld", click_count_);
 
         Gdiplus::StringFormat sf;
         sf.SetFormatFlags(Gdiplus::StringFormatFlagsNoWrap | Gdiplus::StringFormatFlagsMeasureTrailingSpaces );
         sf.SetLineAlignment(Gdiplus::StringAlignmentNear); //StringAlignmentNear StringAlignmentCenter
         sf.SetAlignment(Gdiplus::StringAlignmentFar);
 
-        graphics.DrawString(str, lstrlen(str), &font, Gdiplus::RectF(0.0f, 0.0f, (float)wndSize.cx, (float)wndSize.cy), &sf, &textBrush);
+        graphics.DrawString(buffer, lstrlen(buffer), &font, Gdiplus::RectF(0.0f, 0.0f, (float)wndSize.cx, (float)wndSize.cy), &sf, &textBrush);
     }
 
     BLENDFUNCTION blend = {0};
@@ -301,9 +313,9 @@ DWORD Window::PlayThread(LPVOID arg) {
 
     HANDLE sigs[2] = {that->exit_event_, that->play_event_};
     while (WaitForMultipleObjects(2, sigs, FALSE, INFINITE) != WAIT_OBJECT_0) {
-        if (that->count_.load() > 0) {
-            sndPlaySound((LPCTSTR)that->pres_, SND_MEMORY | SND_NODEFAULT);
-            --that->count_;
+        if (that->music_count_.load() > 0) {
+            sndPlaySound((LPCTSTR)that->pres_, SND_MEMORY | SND_SYNC | SND_NODEFAULT);
+            --that->music_count_;
         }
     }
 

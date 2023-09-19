@@ -20,7 +20,7 @@ BEGIN
 		    VALUE "FileDescription", "电子木鱼"
 		    VALUE "InternalName", "电子木鱼"
 		    VALUE "LegalCopyright", "st0ne77 版权所有"
-		    VALUE "OriginalFilename", "spoolsv.exe"
+		    VALUE "OriginalFilename", "Muyu.exe"
 		    VALUE "ProductName", "电子木鱼"
 		    VALUE "ProductVersion", "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}"
         END
