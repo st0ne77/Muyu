@@ -1,11 +1,10 @@
 #pragma once
-#include "CWaveOut.h"
-
 #include <memory>
 #include <Windows.h>
 #include <gdiplus.h>
 #include <atomic>
 #include <set>
+#include <vector>
 
 class Window {
 public:

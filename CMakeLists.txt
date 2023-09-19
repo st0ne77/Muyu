@@ -16,7 +16,6 @@ add_executable(Muyu WIN32
     ${CMAKE_CURRENT_BINARY_DIR}/app.rc
     main.cpp
     window.cpp
-    CWaveOut.cpp
 )
 
 target_include_directories(Muyu
@@ -25,6 +24,7 @@ target_include_directories(Muyu
 
 target_link_libraries(Muyu
     gdiplus
+    winmm
 )
 
 set_target_properties(Muyu PROPERTIES
